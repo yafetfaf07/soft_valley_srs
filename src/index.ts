@@ -40,6 +40,11 @@ export const getServiceByUserId = async (id:string) => {
 }
 
 // TaskRequest
+export const viewTaskByAdmin = async(id:string) => {
+  return db.select().from(taskTable).where(eq(taskTable.agent_id,id))
+}
+
+
 export const insertTask = async (task: NewTask) => {
   return await db.transaction(async (tx) => {
     await tx
@@ -56,3 +61,4 @@ export const insertTask = async (task: NewTask) => {
     return insertedTask;
   });
 };
+

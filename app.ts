@@ -10,6 +10,9 @@ import { JwtAuthService } from "./utils/jwt";
 import { AdminService } from "./src/services/admin_service";
 import { AdminController } from "./src/controllers/admin_controller";
 import { AdminRouter } from "./src/routes/admin_router";
+import { AgentService } from "./src/services/agent_service";
+import { AgentController } from "./src/controllers/agent_controller";
+import { AgentRouter } from "./src/routes/agent_router";
 dotenv.config();
 
 const app = express();
@@ -32,9 +35,14 @@ const adminService = new AdminService();
 const adminController = new AdminController(adminService,jwtService)
 const adminRouter = new AdminRouter(adminController);
 
+//Agent DI
+const agentService = new AgentService();
+const agentController = new AgentController(agentService,jwtService);
+const agentRouter = new AgentRouter(agentController);
 
 app.use("/api/admin",adminRouter.registerRoutes())
 app.use("/api/users", userRouter.registerRoutes());
+app.use("/api/agents", agentRouter.registerRoutes())
 
 app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
   let errorMessage = "An unknown error occured";
