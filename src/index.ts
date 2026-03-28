@@ -1,13 +1,14 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { usersTable } from './db/schema';
+import { serviceRequestTable, usersTable } from './db/schema';
 import { eq,and} from 'drizzle-orm';
 
-export const db = drizzle(process.env.DATABASE_URL!);
+ const db = drizzle(process.env.DATABASE_URL!);
 export type NewUser = typeof usersTable.$inferInsert;
+export type NewRequest = typeof serviceRequestTable.$inferInsert;
 
 
-
+// Users
 export const insertUser = async (user: NewUser) => {
   return db.insert(usersTable).values(user).returning({id:usersTable.id, name:usersTable.name,role:usersTable.role});
 }
@@ -23,4 +24,9 @@ export const Login = async (email:string, password:string) => {
     eq(usersTable.password,password)
   )
 );
+}
+
+// ServiceRequest
+export const insertServiceRequest = async (user: NewRequest) => {
+  return db.insert(serviceRequestTable).values(user).returning();
 }

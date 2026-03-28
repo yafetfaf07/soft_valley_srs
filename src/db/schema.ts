@@ -24,8 +24,8 @@ export const serviceRequestTable = table("serviceRequest", {
   title: t.varchar({ length: 15 }),
   description: t.varchar({ length: 100 }),
   imageUrl: t.varchar({ length: 30 }),
-  latitude: t.numeric(),
-  longitude: t.numeric(),
+  latitude: t.doublePrecision(),
+  longitude: t.doublePrecision(),
   status: t.varchar({ length: 11 }),
   category: t.varchar({ length: 11 }),
   createdAt: t.timestamp().defaultNow(),
@@ -44,6 +44,6 @@ export const notification = table("notification", {
   user_id: t.uuid("uid").references(() => usersTable.id),
   admin_id: t.uuid("admin_id").references(() => usersTable.id),
   message: t.varchar({ length: 30 }),
-  isRead: t.boolean(),
+  isRead: t.boolean().default(false),
   completedAt: t.timestamp(),
 });

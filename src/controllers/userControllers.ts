@@ -3,7 +3,19 @@ import { RequestHandler } from "express";
 import { UserService } from "../services/user_service";
 import { JwtAuthService } from "../../utils/jwt";
 import HashPasswordService from "../../utils/hash-password";
-
+import { NewRequest } from "..";
+interface serviceRequest {
+  id: string;
+  citizen_id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  latitude: number;
+  longitude: number;
+  status: string;
+  category: string;
+  createdAt: string;
+}
 export class UserController {
   private _userService: UserService;
   private _jwtService: JwtAuthService;
@@ -23,7 +35,12 @@ export class UserController {
   > = async (req, res, next) => {
     const { name, password, email, role } = req.body;
     try {
-      if (!name || !password || !email || !role) {
+      if (
+        name == undefined ||
+        password == undefined ||
+        email == undefined ||
+        !role
+      ) {
         throw createHttpError(400, "All fields are required");
       }
       const existingUser = await this._userService.getUserByEmail(email);
@@ -39,16 +56,16 @@ export class UserController {
       );
 
       const accessToken = this._jwtService.generateAccessToken({
-        id:newUser[0].id,
-        name:newUser[0].name,
-        role:newUser[0].role,
-      })
-          const refreshToken = this._jwtService.generateRefreshToken({
-        id:newUser[0].id,
-        name:newUser[0].name,
-        role:newUser[0].role,
-      })
-  
+        id: newUser[0].id,
+        name: newUser[0].name,
+        role: newUser[0].role,
+      });
+      const refreshToken = this._jwtService.generateRefreshToken({
+        id: newUser[0].id,
+        name: newUser[0].name,
+        role: newUser[0].role,
+      });
+
       res.cookie("token", refreshToken, {
         httpOnly: true,
         secure: false,
@@ -65,16 +82,65 @@ export class UserController {
       next(error);
     }
   };
+createRequest: RequestHandler<
+  unknown,
+  unknown,
+  NewRequest
+> = async (req, res, next) => {
+  const { title, description, imageUrl, latitude, longitude, category } = req.body;
+  const authHeader = req.headers.authorization;
 
- verifyToken: RequestHandler<unknown, unknown,unknown, unknown> = async(req,res,next) => {
-      const accessToken = req.headers["authorization"]?.split(' ')[1];
-  
-      if (!accessToken) {
-       return res.status(400).json({message:"Token is missing"})
-      }
-      const decoded = this._jwtService.verifyAccessToken(accessToken);
-      res.status(200).json({id:decoded})
+  try {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw createHttpError(401, "Authorization header missing or invalid");
     }
+    const token = authHeader.split(" ")[1];
+
+    const decodedUser = this._jwtService.verifyAccessToken(token);
+    if (!decodedUser || !decodedUser.id) {
+      throw createHttpError(401, "Invalid or expired token");
+    }
+
+    if (!title || !description || !category || latitude === undefined || longitude === undefined) {
+      throw createHttpError(400, "Title, description, category, and location coordinates are required");
+    }
+
+    const newServiceRequest = await this._userService.createServiceRequest(
+      decodedUser.id,
+      title,
+      description,
+      imageUrl || "", 
+      latitude!,
+      longitude!,
+      category,
+      "pending" // Default status
+    );
+
+    // 5. Success Response
+    res.status(201).json({
+      message: "Service request created successfully",
+      data: newServiceRequest[0], // Drizzle usually returns an array
+    });
+
+  } catch (error) {
+    console.error("Error in createRequest controller:", error);
+    next(error);
+  }
+};
+
+  verifyToken: RequestHandler<unknown, unknown, unknown, unknown> = async (
+    req,
+    res,
+    next,
+  ) => {
+    const accessToken = req.headers["authorization"]?.split(" ")[1];
+
+    if (!accessToken) {
+      return res.status(400).json({ message: "Token is missing" });
+    }
+    const decoded = this._jwtService.verifyAccessToken(accessToken);
+    res.status(200).json({ id: decoded });
+  };
   login: RequestHandler<unknown, unknown, { email: string; password: string }> =
     async (req, res, next) => {
       const { email, password } = req.body;
@@ -95,81 +161,89 @@ export class UserController {
           return;
         }
 
-    const accessToken = this._jwtService.generateAccessToken({
-        id:getUser[0].id,
-        name:getUser[0].name,
-        role:getUser[0].role,
-      })
-          const refreshToken = this._jwtService.generateRefreshToken({
-        id:getUser[0].id,
-        name:getUser[0].name,
-        role:getUser[0].role,
-      })
-  
-      res.cookie("token", refreshToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      res.status(201).json({
-        token: accessToken,
-        message: "Registration Successful",
-        data: {
-        id:getUser[0].id,
-        name:getUser[0].name,
-        role:getUser[0].role,
-      },
-      });
+        const accessToken = this._jwtService.generateAccessToken({
+          id: getUser[0].id,
+          name: getUser[0].name,
+          role: getUser[0].role,
+        });
+        const refreshToken = this._jwtService.generateRefreshToken({
+          id: getUser[0].id,
+          name: getUser[0].name,
+          role: getUser[0].role,
+        });
+
+        res.cookie("token", refreshToken, {
+          httpOnly: true,
+          secure: false,
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+        res.status(201).json({
+          token: accessToken,
+          message: "Registration Successful",
+          data: {
+            id: getUser[0].id,
+            name: getUser[0].name,
+            role: getUser[0].role,
+          },
+        });
         return;
       } catch (error) {
         console.error("error: ", error);
         next(error);
       }
     };
- 
-   refresh: RequestHandler<unknown, unknown, unknown, unknown> = async(req,res,next) => {
-      const {token} = req.cookies;
-      
-      if (!token) {
-          return res.status(401).json({message:"refresh token not found"});
-      }
-      
-      try {
-        
-          const decoded = this._jwtService.verifyToken(token);  
-         
-          const { iat, exp, ...payloadForNewToken } = decoded;
-          
-          const newAccessToken = this._jwtService.generateAccessToken(payloadForNewToken);
-      
-          res.status(200).json({ accessToken: newAccessToken, userId:payloadForNewToken });
-      
-      } catch (error) {
-         
-          res.clearCookie('token');
-          next(error);
-      }
-  }
 
+  refresh: RequestHandler<unknown, unknown, unknown, unknown> = async (
+    req,
+    res,
+    next,
+  ) => {
+    const { token } = req.cookies;
 
-    logout: RequestHandler<unknown, unknown,unknown, unknown> = async(req,res,next) => {
-      try {
-        console.log(req.cookies);
-  
-        res.clearCookie("token", {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production', 
-          sameSite: process.env.NODE_ENV==="production" ? "none" :"strict"
-        });      
-  
-        console.log("Cookies after clear (should be unchanged in req):", req.cookies);
-        res.status(200).json({ data: "Logout successful" });
-  
-      } catch (error) {
-        console.error(error);
-        next(error)
-      }
-    
+    if (!token) {
+      return res.status(401).json({ message: "refresh token not found" });
+    }
+
+    try {
+      const decoded = this._jwtService.verifyToken(token);
+
+      const { iat, exp, ...payloadForNewToken } = decoded;
+
+      const newAccessToken =
+        this._jwtService.generateAccessToken(payloadForNewToken);
+
+      res
+        .status(200)
+        .json({ accessToken: newAccessToken, userId: payloadForNewToken });
+    } catch (error) {
+      res.clearCookie("token");
+      next(error);
+    }
+  };
+
+  logout: RequestHandler<unknown, unknown, unknown, unknown> = async (
+    req,
+    res,
+    next,
+  ) => {
+    try {
+      console.log(req.cookies);
+
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      });
+
+      console.log(
+        "Cookies after clear (should be unchanged in req):",
+        req.cookies,
+      );
+      res.status(200).json({ data: "Logout successful" });
+    } catch (error) {
+      console.error(error);
+      next(error);
+    }
   };
 }

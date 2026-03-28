@@ -15,6 +15,13 @@
       "when": 1774594763591,
       "tag": "0001_violet_the_liberteens",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774628795281,
+      "tag": "0002_soft_mariko_yashida",
+      "breakpoints": true
     }
   ]
 }
