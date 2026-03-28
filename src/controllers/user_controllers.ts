@@ -2,7 +2,7 @@ import createHttpError from "http-errors";
 import { RequestHandler } from "express";
 import { UserService } from "../services/user_service";
 import { JwtAuthService } from "../../utils/jwt";
-import HashPasswordService from "../../utils/hash-password";
+import HashPasswordService from "../../utils/hash_password";
 import { NewRequest } from "..";
 interface serviceRequest {
   id: string;
@@ -128,19 +128,6 @@ createRequest: RequestHandler<
   }
 };
 
-  verifyToken: RequestHandler<unknown, unknown, unknown, unknown> = async (
-    req,
-    res,
-    next,
-  ) => {
-    const accessToken = req.headers["authorization"]?.split(" ")[1];
-
-    if (!accessToken) {
-      return res.status(400).json({ message: "Token is missing" });
-    }
-    const decoded = this._jwtService.verifyAccessToken(accessToken);
-    res.status(200).json({ id: decoded });
-  };
   login: RequestHandler<unknown, unknown, { email: string; password: string }> =
     async (req, res, next) => {
       const { email, password } = req.body;
@@ -178,9 +165,9 @@ createRequest: RequestHandler<
           sameSite: "lax",
           maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-        res.status(201).json({
+        res.status(200).json({
           token: accessToken,
-          message: "Registration Successful",
+          message: "Login Successful",
           data: {
             id: getUser[0].id,
             name: getUser[0].name,
@@ -193,6 +180,41 @@ createRequest: RequestHandler<
         next(error);
       }
     };
+
+getRequestsByUserId: RequestHandler = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  try {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw createHttpError(401, "Authorization header missing or invalid");
+    }
+
+    const token = authHeader.split(" ")[1];
+    
+    const decodedUser = this._jwtService.verifyAccessToken(token);
+    
+    if (!decodedUser || !decodedUser.id || !decodedUser.role) {
+      throw createHttpError(401, "Invalid or expired token");
+    }
+
+    const authorizedRoles = ["citizen", "admin"];
+    if (!authorizedRoles.includes(decodedUser.role)) {
+      throw createHttpError(403, "Only a citizen or admin can see details about the serviceRequest");
+    }
+
+    const serviceRequests = await this._userService.getServiceByUserId(decodedUser.id);
+
+    res.status(200).json({
+      message: "Requests retrieved successfully",
+      role: decodedUser.role,
+      data: serviceRequests,
+    });
+
+  } catch (error) {
+    console.error("Error in getRequestsByUserId:", error);
+    next(error);
+  }
+};
 
   refresh: RequestHandler<unknown, unknown, unknown, unknown> = async (
     req,
@@ -236,10 +258,6 @@ createRequest: RequestHandler<
         sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       });
 
-      console.log(
-        "Cookies after clear (should be unchanged in req):",
-        req.cookies,
-      );
       res.status(200).json({ data: "Logout successful" });
     } catch (error) {
       console.error(error);

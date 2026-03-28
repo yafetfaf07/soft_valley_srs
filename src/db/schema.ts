@@ -30,13 +30,14 @@ export const serviceRequestTable = table("serviceRequest", {
   category: t.varchar({ length: 11 }),
   createdAt: t.timestamp().defaultNow(),
 });
-export const task = table("task", {
+export const taskTable = table("task", {
   id: t.uuid().defaultRandom().primaryKey(),
-  req_id: t.uuid("req_id").references(() => serviceRequestTable.id),
-  agent_id: t.uuid("agent_id").references(() => usersTable.id),
-  admin_id: t.uuid("admin_id").references(() => usersTable.id),
+  req_id: t.uuid("req_id").references(() => serviceRequestTable.id).notNull(),
+  agent_id: t.uuid("agent_id").references(() => usersTable.id).notNull(),
+  admin_id: t.uuid("admin_id").references(() => usersTable.id).notNull(),
   imageUrl: t.varchar({ length: 30 }),
   completedAt: t.timestamp(),
+  createdAt:t.timestamp().defaultNow()
 });
 
 export const notification = table("notification", {

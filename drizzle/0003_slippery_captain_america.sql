@@ -1,0 +1,1 @@
+ALTER TABLE "task" ADD COLUMN "createdAt" timestamp DEFAULT now();

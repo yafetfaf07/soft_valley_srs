@@ -1,5 +1,5 @@
 import express from "express";
-import { UserController } from "../controllers/userControllers";
+import { UserController } from "../controllers/user_controllers";
 // Assuming your Request Controller is either in UserController or a new RequestController
 
 export class UserRouter { 
@@ -15,6 +15,7 @@ export class UserRouter {
         // --- User Routes ---
         this.router.post("/register", this._userController.createUser);
         this.router.post('/login', this._userController.login);
+        this.router.get("/getRequestById", this._userController.getRequestsByUserId);
         
         this.router.post("/create-request", this._userController.createRequest);
 
