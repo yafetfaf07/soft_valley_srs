@@ -1,9 +1,6 @@
 import express from "express";
-import { UserController } from "../controllers/user_controllers";
-import { AdminController } from "../controllers/admin_controller";
 import { AgentController } from "../controllers/agent_controller";
 import { upload } from "../middleware/multerconfig";
-// Assuming your Request Controller is either in UserController or a new RequestController
 
 export class AgentRouter { 
     private _agentController: AgentController;

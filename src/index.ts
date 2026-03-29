@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { serviceRequestTable, taskTable, usersTable } from './db/schema';
-import { eq,and} from 'drizzle-orm';
+import { eq,and, sql} from 'drizzle-orm';
 import { timestamp } from 'drizzle-orm/pg-core';
 
  const db = drizzle(process.env.DATABASE_URL!);
@@ -88,7 +88,7 @@ export const updateSpecificTaskStatus = async (
     // 2. Update the imageUrl in the taskTable for this specific assignment
     await tx
       .update(taskTable)
-      .set({ imageUrl: newImageUrl, completedAt: new Date() })
+      .set({ imageUrl: newImageUrl, completedAt: sql`now()` })
       .where(
         and(
           eq(taskTable.agent_id, agentId),

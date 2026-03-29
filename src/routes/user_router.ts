@@ -1,6 +1,6 @@
 import express from "express";
 import { UserController } from "../controllers/user_controllers";
-// Assuming your Request Controller is either in UserController or a new RequestController
+import { upload } from "../middleware/multerconfig";
 
 export class UserRouter { 
     private _userController: UserController;
@@ -17,7 +17,7 @@ export class UserRouter {
         this.router.post('/login', this._userController.login);
         this.router.get("/getRequestById", this._userController.getRequestsByUserId);
         
-        this.router.post("/create-request", this._userController.createRequest);
+        this.router.post("/create-request", upload.single('file'),this._userController.createRequest);
 
 
         return this.router;

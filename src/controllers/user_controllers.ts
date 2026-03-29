@@ -87,8 +87,9 @@ createRequest: RequestHandler<
   unknown,
   NewRequest
 > = async (req, res, next) => {
-  const { title, description, imageUrl, latitude, longitude, category } = req.body;
+  const { title, description, latitude, longitude, category } = req.body;
   const authHeader = req.headers.authorization;
+  const file = `uploads/${req.file?.filename}`;
 
   try {
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -109,7 +110,7 @@ createRequest: RequestHandler<
       decodedUser.id,
       title,
       description,
-      imageUrl || "", 
+    file,
       latitude!,
       longitude!,
       category,
