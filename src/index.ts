@@ -52,7 +52,6 @@ export const insertTask = async (task: NewTask) => {
       .set({ status: "Assigned" })
       .where(eq(serviceRequestTable.id, task.req_id));
 
-    // 2. Insert the new task
     const [insertedTask] = await tx
       .insert(taskTable)
       .values(task)
@@ -62,3 +61,32 @@ export const insertTask = async (task: NewTask) => {
   });
 };
 
+export const updateSpecificTaskStatus = async (
+  agentId: string,
+  requestId: string,
+  newStatus: string
+) => {
+  return await db.transaction(async (tx) => {
+    const assignment = await tx
+      .select()
+      .from(taskTable)
+      .where(
+        and(
+          eq(taskTable.agent_id, agentId),
+          eq(taskTable.req_id, requestId)
+        )
+      )
+      .limit(1);
+
+    if (assignment.length === 0) {
+      throw new Error("Unauthorized: Agent is not assigned to this request.");
+    }
+
+    // Perform the update
+    return await tx
+      .update(serviceRequestTable)
+      .set({ status: newStatus })
+      .where(eq(serviceRequestTable.id, requestId))
+      .returning();
+  });
+};

@@ -15,6 +15,7 @@ export class AgentRouter {
 
     registerRoutes() {
         this.router.get("/getTaskById", this._agentController.viewTaskByAgentId);
+        this.router.patch("/requests/:req_id/status", this._agentController.updateServiceRequestStatus);
         return this.router;
     }
 }
