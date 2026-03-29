@@ -1,7 +1,6 @@
 import createHttpError from "http-errors";
 import { RequestHandler } from "express";
 import { JwtAuthService } from "../../utils/jwt";
-import { AdminService } from "../services/admin_service";
 import { AgentService } from "../services/agent_service";
 
 export class AgentController {
@@ -49,46 +48,49 @@ export class AgentController {
     }
   };
 
-    updateServiceRequestStatus: RequestHandler<{req_id:string},unknown,{ new_status:string}> = async (
-    req,
-    res,
-    next,
-  ) => {
-    const authHeader = req.headers.authorization;
-    const {new_status} = req.body;
-    const {req_id}=req.params
-    try {
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        throw createHttpError(401, "Authorization header missing or invalid");
-      }
+  updateServiceRequestStatus: RequestHandler<
+  { req_id: string },
+  unknown,
+  { new_status: string }
+> = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const { new_status } = req.body;
+  const { req_id } = req.params;
+  const file = `uploads/${req.file?.filename}`;
 
-      const token = authHeader.split(" ")[1];
-
-      const decodedUser = this._jwtService.verifyAccessToken(token);
-
-      if (!decodedUser || !decodedUser.id || !decodedUser.role) {
-        throw createHttpError(401, "Invalid or expired token");
-      }
-
-      const authorizedRoles = ["agent"];
-      if (!authorizedRoles.includes(decodedUser.role)) {
-        throw createHttpError(403, "Only an agent can access this");
-      }
-     console.log({
-      agent_id:decodedUser.id,
-      req_id:req_id,
-      new_status:new_status
-     })
-
-      const newServiceRequest = await this._agentService.updateStatusTask(decodedUser.id,req_id,new_status)
-
-      res.status(200).json({
-        message: "Success",
-        data: newServiceRequest
-      });
-    } catch (error) {
-      console.error("Error in viewtask  agent-controller:", error);
-      next(error);
+  try {
+    // 1. Authorization Header Check
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw createHttpError(401, "Authorization header missing or invalid");
     }
-  };
+
+    const token = authHeader.split(" ")[1];
+    const decodedUser = this._jwtService.verifyAccessToken(token);
+
+    if (!decodedUser || !decodedUser.id || !decodedUser.role) {
+      throw createHttpError(401, "Invalid or expired token");
+    }
+
+    if (decodedUser.role !== "agent") {
+      throw createHttpError(403, "Only an agent can access this");
+    }
+
+
+    const updatedData = await this._agentService.updateStatusTask(
+      decodedUser.id,
+      req_id,
+      new_status,
+      file || ""
+    );
+
+    res.status(200).json({
+      message: "Task and status updated successfully",
+      data: updatedData,
+    });
+
+  } catch (error) {
+    console.error("Error in updateServiceRequestStatus:", error);
+    next(error);
+  }
+};
 }

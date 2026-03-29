@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { serviceRequestTable, taskTable, usersTable } from './db/schema';
 import { eq,and} from 'drizzle-orm';
+import { timestamp } from 'drizzle-orm/pg-core';
 
  const db = drizzle(process.env.DATABASE_URL!);
 export type NewUser = typeof usersTable.$inferInsert;
@@ -64,9 +65,11 @@ export const insertTask = async (task: NewTask) => {
 export const updateSpecificTaskStatus = async (
   agentId: string,
   requestId: string,
-  newStatus: string
+  newStatus: string,
+  newImageUrl: string // New parameter for the task image
 ) => {
   return await db.transaction(async (tx) => {
+    // 1. Verify that this specific agent is actually assigned to this request
     const assignment = await tx
       .select()
       .from(taskTable)
@@ -82,11 +85,27 @@ export const updateSpecificTaskStatus = async (
       throw new Error("Unauthorized: Agent is not assigned to this request.");
     }
 
-    // Perform the update
-    return await tx
+    // 2. Update the imageUrl in the taskTable for this specific assignment
+    await tx
+      .update(taskTable)
+      .set({ imageUrl: newImageUrl, completedAt: new Date() })
+      .where(
+        and(
+          eq(taskTable.agent_id, agentId),
+          eq(taskTable.req_id, requestId)
+        )
+      );
+
+    // 3. Update the status in the serviceRequestTable
+    const updatedRequest = await tx
       .update(serviceRequestTable)
       .set({ status: newStatus })
       .where(eq(serviceRequestTable.id, requestId))
       .returning();
+
+    return {
+      message: "Task and Request updated successfully",
+      updatedRequest: updatedRequest[0],
+    };
   });
 };

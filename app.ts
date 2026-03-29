@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
 // import cors from "cors";
+import cors from "cors"
 import path from "path";
 import { isHttpError } from "http-errors";
 import { UserRouter } from "./src/routes/user_router";
@@ -13,11 +14,12 @@ import { AdminRouter } from "./src/routes/admin_router";
 import { AgentService } from "./src/services/agent_service";
 import { AgentController } from "./src/controllers/agent_controller";
 import { AgentRouter } from "./src/routes/agent_router";
+import morgan from "morgan";
 dotenv.config();
 
 const app = express();
-// app.use(cors());
-// app.use(morgan("dev"));
+app.use(cors());
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -39,6 +41,9 @@ const adminRouter = new AdminRouter(adminController);
 const agentService = new AgentService();
 const agentController = new AgentController(agentService,jwtService);
 const agentRouter = new AgentRouter(agentController);
+
+
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use("/api/admin",adminRouter.registerRoutes())
 app.use("/api/users", userRouter.registerRoutes());

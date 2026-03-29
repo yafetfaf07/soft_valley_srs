@@ -23,7 +23,7 @@ export const serviceRequestTable = table("serviceRequest", {
   citizen_id: t.uuid("citizen_id").references(() => usersTable.id),
   title: t.varchar({ length: 15 }),
   description: t.varchar({ length: 100 }),
-  imageUrl: t.varchar({ length: 30 }),
+  imageUrl: t.varchar({ length: 80 }),
   latitude: t.doublePrecision(),
   longitude: t.doublePrecision(),
   status: t.varchar({ length: 11 }),
@@ -35,7 +35,7 @@ export const taskTable = table("task", {
   req_id: t.uuid("req_id").references(() => serviceRequestTable.id).notNull(),
   agent_id: t.uuid("agent_id").references(() => usersTable.id).notNull(),
   admin_id: t.uuid("admin_id").references(() => usersTable.id).notNull(),
-  imageUrl: t.varchar({ length: 30 }),
+  imageUrl: t.varchar({ length: 80 }),
   completedAt: t.timestamp(),
   createdAt:t.timestamp().defaultNow()
 });
