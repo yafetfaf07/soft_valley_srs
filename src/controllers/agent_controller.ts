@@ -59,7 +59,7 @@ export class AgentController {
   const file = `uploads/${req.file?.filename}`;
 
   try {
-    // 1. Authorization Header Check
+    // 1. Authorization & Role Checks (Existing Logic)
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw createHttpError(401, "Authorization header missing or invalid");
     }
@@ -75,7 +75,7 @@ export class AgentController {
       throw createHttpError(403, "Only an agent can access this");
     }
 
-
+    // 2. Database Update
     const updatedData = await this._agentService.updateStatusTask(
       decodedUser.id,
       req_id,
@@ -83,6 +83,24 @@ export class AgentController {
       file || ""
     );
 
+    // 3. WebSocket Real-Time Notification
+    const io = req.app.get("io");
+
+    // Option A: Broadcast to everyone (Simple)
+    // io.emit("request_updated", { req_id, new_status });
+
+    // Option B: Target the specific Citizen (Better)
+    // Assuming updatedData contains the serviceRequest record with citizen_id
+    const citizenId = updatedData.updatedRequest?.citizen_id;
+    if (citizenId) {
+      io.to(citizenId).emit("notification", {
+        message: `Your request status has been updated to: ${new_status}`,
+        req_id: req_id,
+        imageUrl: file
+      });
+    }
+
+    // 4. Send Response
     res.status(200).json({
       message: "Task and status updated successfully",
       data: updatedData,
