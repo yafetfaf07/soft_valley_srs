@@ -1,6 +1,6 @@
 import createHttpError from "http-errors";
 import { RequestHandler } from "express";
-import { JwtAuthService } from "../../utils/jwt";
+import { JwtAuthService } from "../utils/jwt";
 import { AdminService } from "../services/admin_service";
 interface createTask {
   req_id: string;

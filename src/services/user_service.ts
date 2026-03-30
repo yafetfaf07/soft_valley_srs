@@ -7,7 +7,7 @@ import {
   NewUser,
   selectUserByEmail,
 } from "..";
-import HashPasswordService from "../../utils/hash_password";
+import HashPasswordService from "../utils/hash_password";
 export class UserService {
   async createUser(
     name: string,

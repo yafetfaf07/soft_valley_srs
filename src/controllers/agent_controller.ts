@@ -1,6 +1,6 @@
 import createHttpError from "http-errors";
 import { RequestHandler } from "express";
-import { JwtAuthService } from "../../utils/jwt";
+import { JwtAuthService } from "../utils/jwt";
 import { AgentService } from "../services/agent_service";
 
 export class AgentController {

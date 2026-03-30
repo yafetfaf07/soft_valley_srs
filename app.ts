@@ -1,17 +1,15 @@
-import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
+import dotenv from "dotenv";
 import http from "http";
-import { Server } from "socket.io"; 
-import cors from "cors";
 import path from "path";
-import { isHttpError } from "http-errors";
+import cors from "cors";
 import morgan from "morgan";
-
-// Route/Controller/Service Imports
+import { Server } from "socket.io"; 
+import { isHttpError } from "http-errors";
 import { UserRouter } from "./src/routes/user_router";
 import { UserService } from "./src/services/user_service";
 import { UserController } from "./src/controllers/user_controllers";
-import { JwtAuthService } from "./utils/jwt";
+import { JwtAuthService } from "./src/utils/jwt";
 import { AdminService } from "./src/services/admin_service";
 import { AdminController } from "./src/controllers/admin_controller";
 import { AdminRouter } from "./src/routes/admin_router";
@@ -23,7 +21,6 @@ dotenv.config();
 
 const app = express();
 
-// 3. Create HTTP Server and Socket.io Instance
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -89,5 +86,5 @@ app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

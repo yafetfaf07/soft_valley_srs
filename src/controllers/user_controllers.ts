@@ -1,8 +1,8 @@
 import createHttpError from "http-errors";
 import { RequestHandler } from "express";
 import { UserService } from "../services/user_service";
-import { JwtAuthService } from "../../utils/jwt";
-import HashPasswordService from "../../utils/hash_password";
+import { JwtAuthService } from "../utils/jwt";
+import HashPasswordService from "../utils/hash_password";
 import { NewRequest } from "..";
 interface serviceRequest {
   id: string;
