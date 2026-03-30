@@ -1,7 +1,5 @@
 import express from "express";
-import { UserController } from "../controllers/user_controllers";
 import { AdminController } from "../controllers/admin_controller";
-// Assuming your Request Controller is either in UserController or a new RequestController
 
 export class AdminRouter { 
     private _adminController: AdminController;
@@ -14,6 +12,7 @@ export class AdminRouter {
 
     registerRoutes() {
         this.router.post("/create-task", this._adminController.createTask);
+        this.router.get("/filter/:status/:startDate/:endDate", this._adminController.selectRequestByFilters)
         return this.router;
     }
 }

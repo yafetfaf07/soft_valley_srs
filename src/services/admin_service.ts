@@ -1,4 +1,4 @@
-import { insertTask, NewTask } from "..";
+import { insertTask, NewTask, selectRequestsByFilters } from "..";
 export class AdminService {
   async createTask(
       req_id: string,
@@ -16,5 +16,15 @@ export class AdminService {
   return newTask
   }
   
+  async selectRequestbyFilter(filters:{
+  status?: string;
+  startDate?: Date;
+  endDate?: Date;
+}) {
+  const selectedTask = await selectRequestsByFilters(filters);
+  return selectedTask;
+}
 
 }
+
+

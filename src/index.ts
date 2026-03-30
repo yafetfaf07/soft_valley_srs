@@ -1,8 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { serviceRequestTable, taskTable, usersTable } from './db/schema';
-import { eq,and, sql} from 'drizzle-orm';
-import { timestamp } from 'drizzle-orm/pg-core';
+import { eq,and, sql, gte, lte} from 'drizzle-orm';
 
  const db = drizzle(process.env.DATABASE_URL!);
 export type NewUser = typeof usersTable.$inferInsert;
@@ -66,10 +65,9 @@ export const updateSpecificTaskStatus = async (
   agentId: string,
   requestId: string,
   newStatus: string,
-  newImageUrl: string // New parameter for the task image
+  newImageUrl: string 
 ) => {
   return await db.transaction(async (tx) => {
-    // 1. Verify that this specific agent is actually assigned to this request
     const assignment = await tx
       .select()
       .from(taskTable)
@@ -85,7 +83,6 @@ export const updateSpecificTaskStatus = async (
       throw new Error("Unauthorized: Agent is not assigned to this request.");
     }
 
-    // 2. Update the imageUrl in the taskTable for this specific assignment
     await tx
       .update(taskTable)
       .set({ imageUrl: newImageUrl, completedAt: sql`now()` })
@@ -96,7 +93,6 @@ export const updateSpecificTaskStatus = async (
         )
       );
 
-    // 3. Update the status in the serviceRequestTable
     const updatedRequest = await tx
       .update(serviceRequestTable)
       .set({ status: newStatus })
@@ -108,4 +104,30 @@ export const updateSpecificTaskStatus = async (
       updatedRequest: updatedRequest[0],
     };
   });
+};
+
+export const selectRequestsByFilters = async (filters: {
+  status?: string;
+  startDate?: Date;
+  endDate?: Date;
+}) => {
+  const { status, startDate, endDate, } = filters;
+
+  const conditions = [];
+
+  if (status) {
+    conditions.push(eq(serviceRequestTable.status, status));
+  }
+
+  if (startDate) {
+    conditions.push(gte(serviceRequestTable.createdAt, startDate));
+  }
+  if (endDate) {
+    conditions.push(lte(serviceRequestTable.createdAt, endDate));
+  }
+
+  return db
+    .select()
+    .from(serviceRequestTable)
+    .where(and(...conditions));
 };
