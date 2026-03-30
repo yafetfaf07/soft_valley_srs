@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import express, { NextFunction, Request, Response } from "express";
-import http from "http"; // 1. Import http
-import { Server } from "socket.io"; // 2. Import Socket.io
+import http from "http";
+import { Server } from "socket.io"; 
 import cors from "cors";
 import path from "path";
 import { isHttpError } from "http-errors";
@@ -27,12 +27,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Adjust this to your frontend URL in production
+    origin: "*",
     methods: ["GET", "POST", "PATCH"],
   },
 });
 
-// 4. Make 'io' accessible globally in requests
 app.set("io", io);
 
 app.use(cors());
@@ -63,16 +62,19 @@ app.use("/api/admin", adminRouter.registerRoutes());
 app.use("/api/users", userRouter.registerRoutes());
 app.use("/api/agents", agentRouter.registerRoutes());
 
-// Basic Socket connection test
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
-  
+
+  socket.on("join_room", (userId: string) => {
+    socket.join(userId);
+    console.log(`Socket ${socket.id} joined room: ${userId}`);
+  });
+
   socket.on("disconnect", () => {
     console.log("User disconnected");
   });
 });
 
-// Error Handler
 app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
   let errorMessage = "An unknown error occured";
   console.error(error);
@@ -86,7 +88,6 @@ app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
 
 const PORT = process.env.PORT || 5000;
 
-// 5. CRITICAL: Change app.listen to server.listen
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
