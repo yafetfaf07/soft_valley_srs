@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { serviceRequestTable, taskTable, usersTable } from './db/schema';
-import { eq,and, sql, gte, lte} from 'drizzle-orm';
+import { eq,and, sql, gte, lte,desc} from 'drizzle-orm';
 
  const db = drizzle(process.env.DATABASE_URL!);
 export type NewUser = typeof usersTable.$inferInsert;
@@ -38,6 +38,25 @@ export const getServiceByUserId = async (id:string) => {
 
 );
 }
+
+export const selectAllRequestsWithPagination = async (page: number, limit: number) => {
+  const offset = (page - 1) * limit;
+
+  // We fetch both the rows and the total count
+  const [data, totalCountResult] = await Promise.all([
+    db.select()
+      .from(serviceRequestTable)
+      .orderBy(desc(serviceRequestTable.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ count: sql<number>`count(*)` }).from(serviceRequestTable)
+  ]);
+
+  return {
+    data,
+    totalItems: Number(totalCountResult[0].count)
+  };
+};
 
 // TaskRequest
 export const viewTaskByAdmin = async(id:string) => {

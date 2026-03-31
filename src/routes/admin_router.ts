@@ -13,6 +13,8 @@ export class AdminRouter {
     registerRoutes() {
         this.router.post("/create-task", this._adminController.createTask);
         this.router.get("/filter/:status/:startDate/:endDate", this._adminController.selectRequestByFilters)
+        this.router.get("/pagination/:page/:limit/", this._adminController.paginatedRequest)
+
         return this.router;
     }
 }

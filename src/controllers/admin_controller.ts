@@ -108,4 +108,31 @@ export class AdminController {
       next(error);
     }
   };
+
+  paginatedRequest: RequestHandler<{page:number, limit:number}> =async(req,res,next) =>{
+    try {
+  const {page,limit} = req.params      
+      
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader?.startsWith("Bearer ")) throw createHttpError(401, "Unauthorized");
+      
+      const token = authHeader.split(" ")[1];
+      const decoded = this._jwtService.verifyAccessToken(token);
+
+      if (decoded.role !== "admin") {
+        throw createHttpError(403, "Access denied. Admins only.");
+      }
+      const result = await this._adminService.getAllRequestsPaginated(page,limit);
+
+      res.status(200).json({
+        message: "Requests retrieved successfully",
+        ...result
+      });
+
+    } catch (error) {
+      console.error("Admin Controller Error:", error);
+      next(error);
+    }
+  };
 }
